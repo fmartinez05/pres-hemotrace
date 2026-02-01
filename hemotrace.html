@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hemotrace - Concurso ideas UGR</title>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- ESTÉTICA CLEAN / THIN FONTS (AJUSTADA: MÁS LEGIBLE) --- */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #FAFAFA;
+            color: #1d1d1f;
+            font-weight: 400; 
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, h4 {
+            font-weight: 300; 
+            letter-spacing: -0.02em;
+        }
+
+        strong, .font-bold {
+            font-weight: 600; 
+        }
+
+        u {
+            text-decoration: underline;
+            text-decoration-color: #94a3b8; 
+            text-decoration-thickness: 1px;
+            text-underline-offset: 4px; 
+        }
+
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.04);
+        }
+
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: opacity, transform;
+        }
+        
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Clase especial para ocultar monetización hasta que sea su turno */
+        .section-hidden-content {
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+            pointer-events: none;
+        }
+        .section-visible-content {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .text-gradient-primary {
+            background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 500; 
+        }
+        
+        .premium-shadow {
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.12);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- COMPONENTE DE NAVEGACIÓN Y "DIRECTOR DE ESCENA" ---
+        const PresentationControls = () => {
+            const sections = [
+                "section-portada",          // 0
+                "section-problema",         // 1
+                "section-solucion",         // 2 (La sección que quieres centrada)
+                "section-funcionamiento",   // 3
+                "section-ejemplo",          // 4
+                "section-nohace",           // 5
+                "section-monetizacion",     // 6
+                "section-privacidad",       // 7
+                "section-futuro",           // 8 (Perspectivas)
+                "section-equipo"            // 9 (Equipo Universitario)
+            ];
+
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const activeAnimationRef = useRef(null); // Para cancelar animaciones si cambiamos de slide
+
+            // Función de suavizado (Easing)
+            const easeInOutCubic = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+            const linear = (t) => t;
+
+            // Función genérica de scroll animado
+            const animateScroll = (targetY, duration, easingFn = easeInOutCubic, callback = null) => {
+                if (activeAnimationRef.current) cancelAnimationFrame(activeAnimationRef.current);
+
+                const startY = window.pageYOffset;
+                const distance = targetY - startY;
+                let startTime = null;
+
+                const animation = (currentTime) => {
+                    if (startTime === null) startTime = currentTime;
+                    const timeElapsed = currentTime - startTime;
+                    const progress = Math.min(timeElapsed / duration, 1);
+                    const ease = easingFn(progress);
+                    
+                    window.scrollTo(0, startY + (distance * ease));
+
+                    if (timeElapsed < duration) {
+                        activeAnimationRef.current = requestAnimationFrame(animation);
+                    } else {
+                        activeAnimationRef.current = null;
+                        if (callback) callback();
+                    }
+                };
+
+                activeAnimationRef.current = requestAnimationFrame(animation);
+            };
+
+            const scrollToElement = (id, offset = 0, duration = 1200, easing = easeInOutCubic, callback) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    const y = element.getBoundingClientRect().top + window.pageYOffset + offset;
+                    animateScroll(y, duration, easing, callback);
+                }
+            };
+
+            // LÓGICA DEL "DIRECTOR DE ESCENA" (Efectos automáticos por sección)
+            useEffect(() => {
+                // 1. Gestionar visibilidad de Monetización
+                const monetizacionContent = document.getElementById('monetizacion-content');
+                if (monetizacionContent) {
+                    if (sections[currentIndex] === "section-monetizacion") {
+                        monetizacionContent.classList.remove('section-hidden-content');
+                        monetizacionContent.classList.add('section-visible-content');
+                    } else {
+                        monetizacionContent.classList.remove('section-visible-content');
+                        monetizacionContent.classList.add('section-hidden-content');
+                    }
+                }
+
+                // CALCULAR OFFSET (Centrado especial para sección 2)
+                let targetOffset = -80; // Offset por defecto
+                
+                // Si es la sección "Solución" (Index 2), calculamos el centro matemático
+                if (currentIndex === 2) {
+                    const el = document.getElementById(sections[currentIndex]);
+                    if (el) {
+                        const windowHeight = window.innerHeight;
+                        const elementHeight = el.offsetHeight;
+                        // Fórmula para centrar verticalmente:
+                        // Offset = - (AlturaVentana - AlturaElemento) / 2
+                        if (elementHeight < windowHeight) {
+                            targetOffset = -((windowHeight - elementHeight) / 2);
+                        } else {
+                            // Si es más grande que la pantalla, lo dejamos un poco más arriba
+                            targetOffset = -60; 
+                        }
+                    }
+                }
+
+                // 2. Scroll inicial a la sección
+                scrollToElement(sections[currentIndex], targetOffset, 1200, easeInOutCubic, () => {
+                    // CALLBACKS: Acciones que ocurren DESPUÉS de llegar a la sección
+
+                    // --- SCENARIO: PROBLEMA ACTUAL (Lectura MUY lenta - 25s) ---
+                    if (currentIndex === 1) { 
+                        setTimeout(() => {
+                            const section = document.getElementById('section-problema');
+                            if(section) {
+                                const bottom = section.getBoundingClientRect().bottom + window.pageYOffset - window.innerHeight + 50; 
+                                animateScroll(bottom, 25000, linear); // AHORA 25 SEGUNDOS
+                            }
+                        }, 1000);
+                    }
+
+                    // --- SCENARIO: FUNCIONAMIENTO (Video Autoplay INMEDIATO + Scroll) ---
+                    if (currentIndex === 3) {
+                        // SIN RETARDO (0ms delay)
+                        const videoContainer = document.getElementById('video-container-func');
+                        const video = document.getElementById('video-func');
+                        
+                        // 1. Reproducir video YA
+                        if (video) {
+                            video.currentTime = 0;
+                            video.play().catch(e => console.log("Autoplay prevenido", e));
+                            video.onended = () => {
+                                scrollToElement('subsection-chatbot', -100, 1000); 
+                            };
+                        }
+
+                        // 2. Iniciar scroll para centrar YA (simultáneo)
+                        if (videoContainer) {
+                            const y = videoContainer.getBoundingClientRect().top + window.pageYOffset - (window.innerHeight / 2) + (videoContainer.offsetHeight / 2);
+                            animateScroll(y, 3000, easeInOutCubic);
+                        }
+                    }
+
+                    // --- SCENARIO: EJEMPLO PRÁCTICO (Espera + Centrar) ---
+                    if (currentIndex === 4) {
+                        setTimeout(() => {
+                            const videoContainer = document.getElementById('video-container-ejemplo');
+                            if (videoContainer) {
+                                const y = videoContainer.getBoundingClientRect().top + window.pageYOffset - (window.innerHeight / 2) + (videoContainer.offsetHeight / 2);
+                                animateScroll(y, 2000, easeInOutCubic);
+                            }
+                        }, 3000); // 3 segundos de espera
+                    }
+
+                    // --- SCENARIO: EQUIPO UNIVERSITARIO (Espera 20s + Scroll Final) ---
+                    if (sections[currentIndex] === "section-equipo") {
+                        setTimeout(() => {
+                            const pageBottom = document.documentElement.scrollHeight;
+                            animateScroll(pageBottom, 5000, linear); 
+                        }, 20000); // Espera exacta de 20 segundos
+                    }
+                });
+
+                return () => {
+                    if (activeAnimationRef.current) cancelAnimationFrame(activeAnimationRef.current);
+                };
+            }, [currentIndex]);
+
+            const handleNext = () => {
+                if (currentIndex < sections.length - 1) setCurrentIndex(prev => prev + 1);
+            };
+            const handlePrev = () => {
+                if (currentIndex > 0) setCurrentIndex(prev => prev - 1);
+            };
+
+            // Teclado
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+                        e.preventDefault();
+                        handleNext();
+                    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        handlePrev();
+                    }
+                };
+                window.addEventListener('keydown', handleKeyDown);
+                return () => window.removeEventListener('keydown', handleKeyDown);
+            }, [currentIndex]);
+
+            return (
+                <div className="fixed bottom-6 right-6 z-[9999] flex gap-2">
+                    <button onClick={handlePrev} disabled={currentIndex === 0} className={`w-12 h-12 rounded-full glass border border-gray-200 shadow-lg flex items-center justify-center transition-all hover:bg-white active:scale-95 ${currentIndex === 0 ? 'opacity-30 cursor-not-allowed' : 'opacity-100'}`}>
+                        <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <button onClick={handleNext} disabled={currentIndex === sections.length - 1} className={`w-12 h-12 rounded-full bg-black text-white shadow-lg flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${currentIndex === sections.length - 1 ? 'opacity-30 cursor-not-allowed' : 'opacity-100'}`}>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                    <div className="absolute -top-8 right-0 text-xs font-medium text-gray-400 bg-white/80 px-2 py-1 rounded">
+                        {currentIndex + 1} / {sections.length}
+                    </div>
+                </div>
+            );
+        };
+
+        const Reveal = ({ children, delay = 0 }) => {
+            const ref = useRef(null);
+            const [isVisible, setIsVisible] = useState(false);
+
+            useEffect(() => {
+                const observer = new IntersectionObserver(([entry]) => {
+                    if (entry.isIntersecting) {
+                        setIsVisible(true);
+                        observer.unobserve(entry.target);
+                    }
+                }, { threshold: 0.15 });
+
+                if (ref.current) observer.observe(ref.current);
+                return () => { if (ref.current) observer.unobserve(ref.current); };
+            }, []);
+
+            return (
+                <div ref={ref} className={`fade-in-section ${isVisible ? 'is-visible' : ''}`} style={{ transitionDelay: `${delay + 150}ms` }}>
+                    {children}
+                </div>
+            );
+        };
+
+        const AutoPlayVideo = ({ src, poster, className, id, manualControl = false }) => {
+            const videoRef = useRef(null);
+
+            useEffect(() => {
+                if (manualControl) return; // Si el control es manual (scriptado), el observer no actúa
+
+                const observer = new IntersectionObserver(([entry]) => {
+                    if (entry.isIntersecting) {
+                        if (videoRef.current) {
+                            videoRef.current.play().catch(error => console.log("Autoplay prevenido por navegador:", error));
+                        }
+                    } else {
+                        if (videoRef.current) videoRef.current.pause();
+                    }
+                }, { threshold: 0.5 }); 
+
+                if (videoRef.current) observer.observe(videoRef.current);
+                return () => { if (videoRef.current) observer.unobserve(videoRef.current); };
+            }, [manualControl]);
+
+            return (
+                <video 
+                    id={id}
+                    ref={videoRef}
+                    src={src}
+                    poster={poster}
+                    className={className}
+                    controls
+                    muted        
+                    playsInline  
+                    // Loop solo si NO es control manual, para que termine y dispare el evento onended
+                    loop={!manualControl} 
+                >
+                    Tu navegador no soporta video HTML5.
+                </video>
+            );
+        };
+
+        const Navbar = () => (
+            <nav className="fixed top-0 w-full z-50 glass h-14 flex items-center justify-center transition-all duration-300">
+                <div className="text-xl font-medium tracking-tight text-black">
+                    hemotrace.com
+                </div>
+            </nav>
+        );
+
+        const Hero = () => {
+            return (
+                <section id="section-portada" className="relative min-h-screen flex items-start pt-28 md:pt-40 overflow-hidden bg-white">
+                    <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-blue-50 rounded-full blur-[120px] -z-10 opacity-60"></div>
+                    <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-50 rounded-full blur-[100px] -z-10 opacity-60"></div>
+
+                    <div className="max-w-7xl mx-auto px-6 w-full">
+                        <div className="grid lg:grid-cols-2 gap-12 items-center">
+                            
+                            <Reveal delay={100}>
+                                <div className="space-y-6">
+                                    <p className="text-blue-600 font-medium tracking-wide uppercase text-xs">Universidad de Granada | Concurso de ideas 2026</p>
+                                    
+                                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-tight leading-[1.1] text-[#1d1d1f]">
+                                        Análisis de hemogramas inteligente<br/> 
+                                    </h1>
+                                    
+                                    <p className="text-lg text-gray-500 max-w-lg leading-relaxed font-normal">
+                                        Transformando los datos complejos de un hemograma en <u>conclusiones claras</u>.
+                                    </p>
+                                    
+                                    <p> <span className="text-black font-medium">Apoyo, organización y eficiencia</span> para profesionales sanitarios
+                                    </p>
+                                </div>
+                            </Reveal>
+                            
+                            <Reveal delay={300}>
+                                <div className="relative group mt-8 lg:mt-0">
+                                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-200 to-purple-200 rounded-[2rem] blur opacity-40 group-hover:opacity-75 transition duration-1000"></div>
+                                    <div className="relative rounded-[1.5rem] overflow-hidden premium-shadow bg-white aspect-video md:h-[400px] w-full">
+                                        <img 
+                                            src="imagen1.jpg" 
+                                            alt="Interfaz Hemotrace" 
+                                            className="w-full h-full object-cover transform transition-transform duration-700 hover:scale-105"
+                                        />
+                                    </div>
+                                </div>
+                            </Reveal>
+
+                        </div>
+                    </div>
+                    
+                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-gray-400">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                    </div>
+                </section>
+            );
+        };
+
+        const ProblemSection = () => {
+            const problems = [
+                {
+                    id: 1,
+                    title: "Complejidad del hemograma",
+                    subtitle: "Exceso de parámetros y relaciones.",
+                    content: <>Un hemograma no son solo números. Glóbulos rojos, hemoglobina, VCM, HCM... Lo vital no es el valor aislado, sino la <u>relación entre ellos</u>. Pequeñas variaciones combinadas indican patologías que el ojo humano puede tardar en detectar.</>
+                },
+                {
+                    id: 2,
+                    title: "Tiempo limitado",
+                    subtitle: "Tiempo limitado por consulta",
+                    content: <>Dado el tiempo limitado por consulta, disponer de <u>herramientas de apoyo</u> que ayuden a identificar patrones y cambios progresivos en analíticas puede ser clave para una detección más temprana.</>
+                },
+                {
+                    id: 3,
+                    title: "Patrones invisibles",
+                    subtitle: "Conclusiones obtenidas de correlaciones de datos",
+                    content: <>Anemias específicas, procesos inflamatorios crónicos o alteraciones complejas. Es posible <u>detectar estas correlaciones</u> en multitud de casos simultáneamente.</>
+                },
+                {
+                    id: 4,
+                    title: "Ansiedad del paciente",
+                    subtitle: "Largos tiempos de espera",
+                    content: <>El informe de laboratorio es técnico e incomprensible. Genera ansiedad y búsquedas erróneas en internet. Hemotrace <u>traduce este lenguaje técnico</u> para el paciente, sin sustituir al médico.</>
+                }
+            ];
+
+            return (
+                <section id="section-problema" className="bg-[#f5f5f7] py-32 px-6">
+                    <div className="max-w-7xl mx-auto">
+                        <Reveal delay={100}>
+                            <div className="mb-24 md:mb-32">
+                                <h2 className="text-3xl md:text-5xl font-light text-black mb-6 tracking-tight">Problema actual.</h2>
+                                <p className="text-xl md:text-2xl text-gray-500 max-w-3xl font-normal">
+                                    Los médicos son grandes profesionales, pero con herramientas actuales su trabajo puede ser más eficiente.
+                                </p>
+                            </div>
+                        </Reveal>
+
+                        <div className="grid md:grid-cols-2 gap-16 relative">
+                            <div className="space-y-32">
+                                {problems.map((p, idx) => (
+                                    <Reveal key={p.id} delay={idx * 150}>
+                                        <div className="group pl-4 border-l border-gray-300 hover:border-black transition-colors duration-500">
+                                            <div className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-widest">Desafío {p.id}</div>
+                                            <h3 className="text-2xl font-normal text-black mb-3">{p.title}</h3>
+                                            <h4 className="text-lg text-blue-600 font-medium mb-4">{p.subtitle}</h4>
+                                            <p className="text-gray-600 leading-relaxed text-base font-normal">
+                                                {p.content}
+                                            </p>
+                                        </div>
+                                    </Reveal>
+                                ))}
+                            </div>
+
+                            <div className="hidden md:block relative">
+                                <div className="sticky top-32 h-[600px] w-full bg-white rounded-[2rem] premium-shadow border border-gray-100 overflow-hidden flex flex-col items-center justify-center p-12 text-center z-10">
+                                    <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-transparent pointer-events-none"></div>
+                                    <div className="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm p-6 mb-8 transform scale-110">
+                                        <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+                                            <span className="font-semibold text-gray-900">Hemograma #892</span>
+                                            <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded-full font-medium">Atención</span>
+                                        </div>
+                                        <div className="space-y-3 font-mono text-sm">
+                                            <div className="flex justify-between text-gray-600"><span>Hemoglobina</span> <span className="text-red-600 font-bold">11.2 g/dL ↓</span></div>
+                                            <div className="flex justify-between text-gray-600"><span>Ferritina</span> <span className="text-red-600 font-bold">78 fL ↓</span></div>
+                                            <div className="flex justify-between text-gray-600"><span>Transferrina</span> <span className="text-orange-500 font-bold">16.5 % ↑</span></div>
+                                        </div>
+                                    </div>
+                                    <h3 className="text-2xl font-normal text-black mb-4 z-10">La barrera de interpretación</h3>
+                                    <p className="text-gray-500 max-w-xs z-10 font-normal">
+                                        Sin hemotrace.com correlacionar estos datos requiere de conocimiento específico y genera incertidumbre.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        const TechSection = () => {
+            return (
+                <section id="section-solucion" className="bg-white py-32 rounded-t-[3rem] relative z-20">
+                    <div className="max-w-7xl mx-auto px-6 lg:px-12">
+                        <Reveal delay={100}>
+                            <div className="text-center mb-24">
+                                <span className="text-blue-600 font-bold tracking-wider uppercase text-xs">Nuestra Solución</span>
+                                <h2 className="text-4xl md:text-6xl font-light tracking-tight mt-4 mb-8 text-black">
+                                    hemotrace.com
+                                </h2>
+                                <p className="text-xl md:text-2xl text-gray-500 max-w-3xl mx-auto font-normal">
+                                    Una plataforma de IA diseñada para transformar informes analíticos complejos en conclusiones claras y completas. Herramienta de apoyo para médicos y pacientes.
+                                </p>
+                            </div>
+                        </Reveal>
+
+                        <div className="grid md:grid-cols-3 gap-8 mb-32">
+                            {[
+                                {
+                                    icon: "📊", 
+                                    title: "1. Datos estructurados", 
+                                    content: <>La inteligencia artificial está entrenada para analizar datos biosanitarios y <u>detectar patrones patológicos</u> que escapan a la vista.</>
+                                },
+                                {
+                                    icon: "🧠", 
+                                    title: "2. Machine learning", 
+                                    content: <>Inteligencia artificial entrenada en multitud de patologías para aprender <u>patrones de variación y correlaciones</u> entre cientos de variables.</>
+                                },
+                                {
+                                    icon: "🎯", 
+                                    title: "3. Predicción", 
+                                    content: <>Ayuda clave en el diagnóstico predictivo. El programa <u>sugiere posibles patologías siguiendo unos patrones</u> (anemia, infección, inflamación) y predice posibles tendencias futuras.</>
+                                }
+                            ].map((item, index) => (
+                                <Reveal key={index} delay={index * 200}>
+                                    <div className="h-full p-10 rounded-3xl bg-gray-50 hover:bg-white border border-transparent hover:border-gray-200 hover:shadow-xl transition-all duration-300">
+                                        <div className="text-4xl mb-6">{item.icon}</div>
+                                        <h3 className="text-xl font-medium mb-3 text-black">{item.title}</h3>
+                                        <div className="text-gray-500 text-sm leading-relaxed font-normal">
+                                            {item.content}
+                                        </div>
+                                    </div>
+                                </Reveal>
+                            ))}
+                        </div>
+
+                        <Reveal delay={200}>
+                            {/* Ajustado padding-top para que el título no se corte (scroll-margin no siempre funciona con animaciones JS puras, mejor padding/margin) */}
+                            <div id="section-funcionamiento" className="relative mb-32 pt-16">
+                                <h2 className="text-3xl md:text-5xl font-light text-black mb-8 tracking-tight text-center">
+                                    Funcionamiento de hemotrace.com
+                                </h2>
+                                
+                                <p className="text-center text-gray-500 max-w-2xl mx-auto mb-10 font-normal leading-relaxed">
+                                    Al cruzar los resultados analíticos con datos clínicos del paciente, la IA contextualiza cada variable. 
+                                    Esto permite obtener <u>conclusiones personalizadas y adaptadas</u> al paciente.
+                                </p>
+
+                                <div id="video-container-func" className="w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-200 relative">
+                                    <AutoPlayVideo 
+                                        id="video-func"
+                                        src="video1.mp4" 
+                                        poster="https://placehold.co/1920x1080/FAFAFA/000000?text=Cargando+Video+1"
+                                        className="w-full h-auto block"
+                                        manualControl={true} /* Control manual para la presentación */
+                                    />
+                                </div>
+                            </div>
+                        </Reveal>
+
+                        <Reveal delay={300}>
+                            <div id="subsection-chatbot" className="relative rounded-[3rem] bg-gradient-to-br from-slate-50 to-blue-50/30 p-8 md:p-16 border border-blue-100 overflow-hidden">
+                                <div className="absolute top-0 right-0 w-96 h-96 bg-purple-100/40 rounded-full blur-[100px] -z-10"></div>
+                                <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-100/40 rounded-full blur-[100px] -z-10"></div>
+
+                                <div className="grid lg:grid-cols-12 gap-12 items-center">
+                                    <div className="lg:col-span-7 space-y-8">                                        
+                                        <div>
+                                            <h3 className="text-4xl md:text-5xl font-light text-black mb-4 tracking-tight">
+                                                Asistente <span className="text-blue-600 font-medium">médico IA</span>
+                                            </h3>
+                                            <p className="text-xl text-gray-500 font-normal leading-relaxed max-w-xl">
+                                                Se trata de un chatbot inteligente que <u>entiende el contexto de tu salud</u> y traduce la complejidad clínica en diálogo humano.
+                                            </p>
+                                        </div>
+
+                                        <div className="grid sm:grid-cols-2 gap-4">
+                                            <div className="bg-white/60 backdrop-blur-sm p-5 rounded-2xl border border-white shadow-sm">
+                                                <div className="text-blue-600 mb-2 font-bold">01. Comprende las conclusiones obtenidas</div>
+                                                <p className="text-sm text-gray-500">Resuelve dudas específicas sobre las conclusiones obtenidas a partir del hemograma</p>
+                                            </div>
+                                            <div className="bg-white/60 backdrop-blur-sm p-5 rounded-2xl border border-white shadow-sm">
+                                                <div className="text-blue-600 mb-2 font-bold">02. Disponible 24/7</div>
+                                                <p className="text-sm text-gray-500">Chatbot habilitado en cualquier momento para resolución de dudas médicas</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="lg:col-span-5 relative">
+                                        <div className="absolute inset-0 bg-blue-400/20 blur-[60px] rounded-full transform scale-75"></div>
+                                        <div className="relative z-10 mx-auto max-w-[280px] md:max-w-[300px]">
+                                            <div className="relative overflow-hidden rounded-[1.5 rem] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.2)] aspect-[9/16]">
+                                                <AutoPlayVideo 
+                                                    src="chatbot.mp4" 
+                                                    poster="https://placehold.co/1080x1920/FAFAFA/000000?text=Chatbot+AI"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </Reveal>
+                    </div>
+                </section>
+            );
+        };
+
+        const PracticalExample = () => {
+            return (
+                <section id="section-ejemplo" className="bg-black py-32 px-6 text-white relative overflow-hidden">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-blue-900/30 rounded-full blur-[120px]"></div>
+
+                    <div className="max-w-7xl mx-auto relative z-10">
+                        <Reveal delay={150}>
+                            <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
+                                <div>
+                                    <h2 className="text-4xl md:text-6xl font-light mt-2">Ejemplo práctico</h2>
+                                </div>
+                                <p className="text-gray-400 max-w-md text-lg text-right md:text-left font-normal">
+                                    Observa cómo el sistema detecta correlaciones que podrían pasar desapercibidas en una revisión rutinaria rápida.
+                                </p>
+                            </div>
+                        </Reveal>
+
+                        <Reveal delay={400}>
+                            <div className="grid md:grid-cols-3 gap-6 mb-12">
+                                <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                                    <h4 className="font-medium text-white mb-2">Análisis en tiempo real</h4>
+                                    <p className="text-sm text-gray-400 font-normal">Procesamiento inmediato al subir el archivo PDF con los resultados.</p>
+                                </div>
+                                <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                                    <h4 className="font-medium text-white mb-2">Explicación natural</h4>
+                                    <p className="text-sm text-gray-400 font-normal">Utilización de un lenguaje comprensible sin emplear un vocabulario técnico.</p>
+                                </div>
+                                <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                                    <h4 className="font-medium text-white mb-2">Conclusiones personalizadas</h4>
+                                    <p className="text-sm text-gray-400 font-normal">Conclusiones obtenidas por contraste de datos médicos del paciente.</p>
+                                </div>
+                            </div>
+
+                            <div id="video-container-ejemplo" className="relative rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(59,130,246,0.3)] border border-gray-800 bg-gray-900">
+                                <AutoPlayVideo 
+                                    src="video2.mp4" 
+                                    poster="https://placehold.co/1920x1080/000000/FFFFFF?text=Ejemplo+Práctico+Video"
+                                    className="w-full aspect-video object-cover"
+                                />
+                            </div>
+                        </Reveal>
+                    </div>
+                </section>
+            );
+        };
+
+        const LimitationSection = () => (
+            <section id="section-nohace" className="bg-red-50 py-24 border-y border-red-100">
+                <div className="max-w-4xl mx-auto px-6 text-center">
+                    <Reveal delay={200}>
+                        <h2 className="text-3xl md:text-4xl font-normal text-slate-900 mb-8">Lo que NO hace Hemotrace</h2>
+                        
+                        <div className="grid md:grid-cols-2 gap-8 text-left">
+                            <div className="bg-white p-8 rounded-3xl shadow-sm border border-red-100">
+                                <h3 className="text-xl font-medium text-slate-900 mb-3">❌ No diagnostica</h3>
+                                <p className="text-slate-600 text-sm leading-relaxed font-normal">
+                                    Hemotrace no explora el historial personal del paciente. Solo analiza números y los relaciona con datos cedidos por el paciente. Puede sugerir patrones sirviendo como <u><span className="text-black font-medium">herramienta de apoyo para personal sanitario,</span> pero nunca sustituir diagnóstico médico</u>.
+                                </p>
+                            </div>
+                            <div className="bg-white p-8 rounded-3xl shadow-sm border border-red-100">
+                                <h3 className="text-xl font-medium text-slate-900 mb-3">🗑️ Calidad de los datos</h3>
+                                <p className="text-slate-600 text-sm leading-relaxed font-normal">
+                                    La precisión del análisis depende directamente de la calidad y consistencia de los datos introducidos
+                                </p>
+                            </div>
+                        </div>
+                    </Reveal>
+                </div>
+            </section>
+        );
+
+        // SECCIÓN DE MONETIZACIÓN (Con lógica de ocultamiento)
+        const MonetizationSection = () => {
+            return (
+                <section id="section-monetizacion" className="bg-white py-24 px-6 border-b border-gray-100">
+                    <div id="monetizacion-content" className="max-w-7xl mx-auto section-hidden-content">
+                         <Reveal delay={100}>
+                            <div className="text-center mb-16">
+                                <h2 className="text-3xl md:text-5xl font-light text-black mb-6 tracking-tight">Monetización de hemotrace.com</h2>
+                                <p className="text-xl text-gray-500 font-normal max-w-3xl mx-auto">
+                                    Un modelo de negocio adaptado a cada tipo de usuario.
+                                </p>
+                            </div>
+                        </Reveal>
+
+                        <div className="grid md:grid-cols-3 gap-8">
+                            {/* Pacientes */}
+                            <Reveal delay={200}>
+                                <div className="p-8 rounded-3xl bg-gray-50 border border-gray-100 flex flex-col items-center text-center h-full hover:shadow-lg transition-shadow duration-300">
+                                    <div className="text-4xl mb-4">👤</div>
+                                    <h3 className="text-2xl font-medium text-black mb-2">Pacientes</h3>
+                                    <p className="text-blue-600 font-medium mb-6 uppercase text-xs tracking-widest">Pago por uso</p>
+                                    <ul className="space-y-3 text-gray-600 font-normal w-full">
+                                        <li className="flex justify-between border-b border-gray-200 pb-2">
+                                            <span>1 Informe</span>
+                                            <span className="font-bold text-black">2€</span>
+                                        </li>
+                                        <li className="flex justify-between border-b border-gray-200 pb-2">
+                                            <span>5 Informes</span>
+                                            <span className="font-bold text-black">5€</span>
+                                        </li>
+                                        <li className="flex justify-between">
+                                            <span>20 Informes</span>
+                                            <span className="font-bold text-black">10€</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </Reveal>
+
+                            {/* Médicos */}
+                            <Reveal delay={300}>
+                                <div className="p-8 rounded-3xl bg-white border-2 border-blue-600 shadow-xl relative flex flex-col items-center text-center h-full transform md:-translate-y-4">
+                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide">Cliente objetivo</div>
+                                    <div className="text-4xl mb-4">👨‍⚕️</div>
+                                    <h3 className="text-2xl font-medium text-black mb-2">Médicos</h3>
+                                    <p className="text-blue-600 font-medium mb-6 uppercase text-xs tracking-widest">Suscripción</p>
+                                    <ul className="space-y-3 text-gray-600 font-normal w-full">
+                                        <li className="flex justify-between border-b border-gray-100 pb-2">
+                                            <span>Mensual</span>
+                                            <span className="font-bold text-black">10€</span>
+                                        </li>
+                                        <li className="flex justify-between">
+                                            <span>Anual</span>
+                                            <span className="font-bold text-black">60€</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </Reveal>
+
+                            {/* Seguros */}
+                            <Reveal delay={400}>
+                                <div className="p-8 rounded-3xl bg-gray-50 border border-gray-100 flex flex-col items-center text-center h-full hover:shadow-lg transition-shadow duration-300">
+                                    <div className="text-4xl mb-4">🏥</div>
+                                    <h3 className="text-2xl font-medium text-black mb-2">Seguros médicos</h3>
+                                    <p className="text-blue-600 font-medium mb-6 uppercase text-xs tracking-widest">B2B</p>
+                                    <p className="text-gray-500 font-normal leading-relaxed">
+                                        Integración mediante acuerdos específicos y licencias por volumen de asegurados.
+                                    </p>
+                                </div>
+                            </Reveal>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        const PrivacySection = () => {
+            return (
+                <section id="section-privacidad" className="bg-[#f5f5f7] py-24 border-b border-gray-200">
+                    <div className="max-w-4xl mx-auto px-6">
+                        <Reveal delay={150}>
+                            <div className="text-center mb-12">
+                                <h2 className="text-3xl md:text-5xl font-light text-black mb-6 tracking-tight">Políticas de privacidad</h2>
+                                <p className="text-xl text-gray-500 font-normal">No necesita identificar al usuario y no guarda sus informes.</p>
+                            </div>
+                        </Reveal>
+
+                        <div className="grid md:grid-cols-2 gap-8 mb-12">
+                            <Reveal delay={300}>
+                                <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 h-full flex flex-col justify-center">
+                                    <h3 className="text-lg font-medium text-gray-900 mb-6">La plataforma:</h3>
+                                    <ul className="space-y-4 font-normal">
+                                        {[
+                                            "No necesita nombre real",
+                                            "No necesita DNI",
+                                            "No almacena resultados",
+                                            "No comparte datos personales"
+                                        ].map((item, i) => (
+                                            <li key={i} className="flex items-center gap-3 text-gray-600">
+                                                <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
+                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                                </div>
+                                                {item}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </Reveal>
+
+                            <Reveal delay={450}>
+                                <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 h-full flex flex-col justify-center items-center text-center relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl -z-10"></div>
+                                    <div className="text-5xl mb-6">🛡️</div>
+                                    <h3 className="text-xl font-medium text-gray-900 mb-4">Protección asegurada</h3>
+                                    <p className="text-gray-500 leading-relaxed font-normal">
+                                        Priorizamos la <u>protección de datos</u> y trabajaremos para mejorarla lo máximo posible.
+                                    </p>
+                                </div>
+                            </Reveal>
+                        </div>
+
+                        <Reveal delay={600}>
+                            <div className="bg-blue-600 rounded-3xl p-8 md:p-10 text-white text-center shadow-xl shadow-blue-900/20">
+                                <p className="text-lg md:text-xl font-normal leading-relaxed">
+                                    👉 Analizar datos <span className="font-bold underline decoration-blue-300 underline-offset-4">anónimos</span> es más seguro aunque no permite generar un historial clínico completo.
+                                </p>
+                            </div>
+                        </Reveal>
+                    </div>
+                </section>
+            );
+        };
+
+        const AboutSection = () => {
+            const team = [
+                { name: "Francisco Martínez", role: "Coordinador del proyecto", desc: "Coordinación y desarrollo.", img: "miembro1.jpeg" },
+                { name: "David Villén", role: "Soporte Técnico", desc: "Estructura técnica y desarrollo.", img: "miembro2.jpeg" },
+                { name: "Rebeca Reguero", role: "Diseño & UX", desc: "Validación funcional y organización.", img: "miembro3.jpeg" },
+                { name: "Víctor Reguero", role: "QA & Testing", desc: "Mejora del sistema y pruebas.", img: "miembro4.jpeg" }
+            ];
+
+            const roadmapItems = [
+                {
+                    id: 1,
+                    title: "Marketing",
+                    cost: "500 €",
+                    icon: "📣",
+                    features: ["Campaña segmentada (Ads/LinkedIn)", "Branding corporativo", "SEO a largo plazo", "Redes sociales"]
+                },
+                {
+                    id: 2,
+                    title: "Prueba piloto",
+                    cost: "500 €",
+                    icon: "🧪",
+                    features: ["Feedback y ajustes rápidos", "Captación de usuarios", "Análisis de uso real", "Validación de mercado"]
+                },
+                {
+                    id: 3,
+                    title: "Análisis multi-informe",
+                    cost: "700 €",
+                    icon: "📑",
+                    features: ["Procesamiento paralelo", "Comparativa de evolución clínica", "Subida de archivos en lote", "Resúmenes individuales"]
+                },
+                {
+                    id: 4,
+                    title: "Interfaz y velocidad",
+                    cost: "1000 €",
+                    icon: "⚡",
+                    features: ["Dashboard avanzado y visual", "Mayor velocidad de IA", "Registro de usuarios", "Planes de suscripción y pasarela de pago"]
+                },
+                
+            ];
+
+            return (
+                <section id="section-futuro" className="bg-white py-32 px-6">
+                    <div className="max-w-7xl mx-auto">
+                        
+                        {/* SECTION 1: FUTURE PERSPECTIVES (Modified) */}
+                        <div className="grid lg:grid-cols-12 gap-12 mb-32">
+                            {/* Text & Total (Left Column - 5 cols) */}
+                            <div className="lg:col-span-5 space-y-8">
+                                <Reveal delay={100}>
+                                    <h2 className="text-4xl font-light text-black mb-6">Perspectivas futuras</h2>
+                                    <p className="text-gray-500 text-lg leading-relaxed font-normal">
+                                        Hemotrace se encuentra en una fase de MVP funcional: existe y funciona.
+                                    </p>
+                                    <p className="text-gray-500 text-lg leading-relaxed font-normal">
+                                        Aún necesita validación de mercado y monetización real.
+                                    </p> 
+                                    <p className="text-gray-500 text-lg leading-relaxed font-normal">
+                                        Planteamos mejoras realistas para hacer realidad nuestra idea.
+                                    </p>
+                                </Reveal>
+                                
+                                <Reveal delay={200}>
+                                    <div className="glass-card p-8 rounded-[2rem] bg-gradient-to-br from-white to-blue-50/50 border border-blue-100 relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-100 rounded-full blur-3xl -z-10 opacity-50"></div>
+                                        <p className="text-xs text-blue-600 uppercase tracking-widest mb-2 font-bold">Inversión Estimada</p>
+                                        <p className="text-6xl font-light text-black tracking-tighter">≈ 2 700 €</p>
+                                        <p className="mt-4 text-sm text-gray-500 font-normal">Recursos optimizados para máximo impacto sanitario.</p>
+                                    </div>
+                                </Reveal>
+                            </div>
+
+                            {/* Roadmap Grid (Right Column - 7 cols) */}
+                            <div className="lg:col-span-7">
+                                <div className="grid sm:grid-cols-2 gap-4">
+                                    {roadmapItems.map((item, index) => (
+                                        <Reveal key={index} delay={300 + (index * 100)}>
+                                            <div className="group p-6 rounded-2xl bg-white border border-gray-100 hover:border-blue-400 hover:shadow-lg transition-all duration-300 h-full flex flex-col">
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                                                        {item.icon}
+                                                    </div>
+                                                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${item.cost === 'Estrategia' ? 'bg-purple-100 text-purple-600' : 'bg-blue-50 text-blue-600'}`}>
+                                                        {item.cost}
+                                                    </span>
+                                                </div>
+                                                <h4 className="font-medium text-black mb-3 text-lg leading-tight">{item.title}</h4>
+                                                <ul className="space-y-2 mt-auto">
+                                                    {item.features.map((feat, i) => (
+                                                        <li key={i} className="text-xs text-gray-500 flex items-start gap-2">
+                                                            <span className="text-blue-400 mt-0.5">•</span> 
+                                                            {feat}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        </Reveal>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* SECTION 2: TEAM (Ahora con ID específico para navegación) */}
+                        <Reveal delay={200}>
+                            <div id="section-equipo" className="text-center pt-10 border-t border-gray-100">
+                                <h2 className="text-4xl font-light text-black mb-16 tracking-tight">Equipo universitario</h2>
+                                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
+                                    {team.map((m, i) => (
+                                        <div key={i} className="group cursor-default">
+                                            <div className="w-40 h-40 mx-auto rounded-full overflow-hidden shadow-lg mb-6 border-4 border-white group-hover:scale-110 transition-transform duration-500 ease-out relative bg-gray-200">
+                                                <img 
+                                                    src={m.img} 
+                                                    alt={m.name} 
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <h4 className="text-xl font-medium text-black">{m.name}</h4>
+                                            <p className="text-blue-600 text-sm font-medium mb-2">{m.role}</p>
+                                            <p className="text-gray-500 text-sm font-normal">{m.desc}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </Reveal>
+
+                    </div>
+                </section>
+            );
+        };
+
+        const Footer = () => (
+            <footer className="bg-[#f5f5f7] py-20 px-6 border-t border-gray-200">
+                <Reveal delay={200}>
+                    <div className="max-w-4xl mx-auto text-center space-y-8">
+                        <h2 className="text-3xl md:text-5xl font-light text-black tracking-tight">Más que una idea,<br/>una realidad digital.</h2>
+                        <p className="text-gray-500 text-lg font-normal">
+                            Hemotrace es el primer paso hacia una sanidad más eficiente, segura y organizada.
+                            Desde la Universidad de Granada para el mundo.
+                        </p>
+                        <div className="pt-12 text-sm text-gray-400 flex flex-col md:flex-row justify-center items-center gap-6 font-medium">
+                            <span>© 2026 · Hemotrace</span>
+                            <span className="hidden md:inline">•</span>
+                            <span>Universidad de Granada</span>
+                        </div>
+                    </div>
+                </Reveal>
+            </footer>
+        );
+
+        const EndCurtain = () => {
+            const [show, setShow] = useState(false);
+            const [canAnimate, setCanAnimate] = useState(false);
+
+            useEffect(() => {
+                // Activamos las animaciones un poco después de montar el componente
+                // para evitar que se vea la cortina "subiendo" al recargar.
+                const timer = setTimeout(() => setCanAnimate(true), 500);
+
+                const handleScroll = () => {
+                    const scrollPosition = window.innerHeight + window.scrollY;
+                    const bodyHeight = document.documentElement.scrollHeight;
+                    
+                    if (scrollPosition >= bodyHeight - 20) {
+                        setShow(true);
+                    } else {
+                        setShow(false);
+                    }
+                };
+
+                window.addEventListener('scroll', handleScroll);
+                // Chequeo inicial por si recargamos ya abajo del todo
+                handleScroll();
+
+                return () => {
+                    window.removeEventListener('scroll', handleScroll);
+                    clearTimeout(timer);
+                };
+            }, []);
+
+            return (
+                <div className={`fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center ${canAnimate ? 'transition-transform duration-1000 ease-in-out' : ''} ${show ? 'translate-y-0' : '-translate-y-full'}`}>
+                    <h1 className={`text-6xl md:text-8xl font-light tracking-tighter text-black transition-opacity duration-1000 delay-700 ${show ? 'opacity-100' : 'opacity-0'}`}>
+                        GRACIAS
+                    </h1>
+                    <p className={`mt-6 text-xl md:text-2xl text-blue-600 font-medium tracking-widest uppercase transition-opacity duration-1000 delay-[2000ms] ${show ? 'opacity-100' : 'opacity-0'}`}>
+                        hemotrace.com
+                    </p>
+                </div>
+            );
+        };
+
+        const App = () => {
+            return (
+                <div className="antialiased selection:bg-blue-100 selection:text-blue-900">
+                    <EndCurtain />
+                    <PresentationControls />
+                    <Navbar />
+                    <Hero />
+                    <ProblemSection />
+                    <TechSection />
+                    <PracticalExample />
+                    <LimitationSection />
+                    <MonetizationSection /> 
+                    <PrivacySection />
+                    <AboutSection />
+                    <Footer />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
