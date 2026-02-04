@@ -377,10 +377,10 @@
 
         const Hero = () => {
             const newsItems = [
-                { img: "titulo1.jpg", source: "- El País" },
+                { img: "titulo4.jpg", source: "- Telecinco" },
                 { img: "titulo2.jpg", source: "- Infobae" },
-                { img: "titulo3.jpg", source: "- Infobae" },
-                { img: "titulo4.jpg", source: "- Telecinco" }
+                { img: "titulo3.jpg", source: "- murciatoday.com" },
+                { img: "titulo1.jpg", source: "- El País" }
             ];
             
             // Duplicamos los items varias veces para crear el efecto de loop infinito
@@ -462,25 +462,41 @@
                     id: 1,
                     title: "Complejidad del hemograma",
                     subtitle: "Exceso de parámetros y relaciones.",
-                    content: <>Un hemograma no son solo números. Glóbulos rojos, hemoglobina, VCM, HCM... Lo vital no es el valor aislado, sino la <u>relación entre ellos</u>. Pequeñas variaciones combinadas indican patologías que el ojo humano puede tardar en detectar.</>
+                    content: <>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>🙋🏻‍♀️ Necesidad de <span className="text-black font-medium">individualizar</span></li>
+                          <li>📚 Requiere un <span className="text-black font-medium">análisis exhaustivo y detallado</span></li>
+                        </ul>
+                      </>
                 },
                 {
                     id: 2,
                     title: "Tiempo limitado",
                     subtitle: "Tiempo limitado por consulta",
-                    content: <>Dado el tiempo limitado por consulta, disponer de <span className="text-black font-medium"><u>herramientas de apoyo</u></span> que ayuden a identificar patrones y cambios progresivos en analíticas puede ser clave para una detección más temprana.</>
+                    content: <>  <ul className="list-disc pl-5 space-y-1">
+                        <li>⏱️ Necesidad de disponer de <span className="text-black font-medium">herramientas de apoyo</span> para <u>reducir tiempo de análisis</u></li>
+                      </ul>
+                    </>
                 },
                 {
                     id: 3,
                     title: "Patrones invisibles",
                     subtitle: "Conclusiones obtenidas de correlaciones de datos",
-                    content: <>Anemias específicas, procesos inflamatorios crónicos o alteraciones complejas. Es posible <span className="text-black font-medium"><u>detectar estas correlaciones</u></span> en multitud de casos simultáneamente.</>
+                    content: <><ul className="list-disc pl-5 space-y-1">
+                        <li>👀 Necesidad de <span className="text-black font-medium">detectar correlaciones</span> que no se ven a simple vista</li>
+                      </ul>
+                    </>
                 },
+
                 {
                     id: 4,
                     title: "Ansiedad del paciente",
                     subtitle: "Largos tiempos de espera",
-                    content: <>El informe de laboratorio es técnico e incomprensible. Genera ansiedad y búsquedas erróneas en internet. Hemotrace <span className="text-black font-medium"><u>traduce este lenguaje técnico</u></span> para el paciente, sin sustituir al médico.</>
+                    content: <><ul className="list-disc pl-5 space-y-1">
+                      <li>😰 Ansiedad del paciente <span className="text-black font-medium">agrava el problema</span></li>
+                      <li>🤝 Hemotrace <span className="text-black font-medium">traduce este lenguaje técnico</span> para el paciente <u>sin sustituir al médico</u></li>
+                    </ul>
+                  </>
                 }
             ];
 
@@ -707,7 +723,7 @@
             const data = [
                 { feat: "Interpretación de hemogramas", chatgpt: "✅", hemo: "✅", med: "✅", kant: "✅" },
                 { feat: "Explicación narrativa detallada", chatgpt: "Baja", hemo: "Alta", med: "Alta", kant: "Media" },
-                { feat: "Generación de informes", chatgpt: "❌", hemo: "✅", med: "❌", kant: "❌" },
+                { feat: "Generación de informes detallados", chatgpt: "❌", hemo: "✅", med: "❌", kant: "❌" },
                 { feat: "Accesibilidad pública", chatgpt: "Alta", hemo: "Alta", med: "Baja", kant: "Media" },
                 { feat: "Razonamiento clínico", chatgpt: "Moderado", hemo: "Alto", med: "Alto", kant: "Medio" },
                 { feat: "Recomendaciones", chatgpt: "Genéricas", hemo: "Personalizadas", med: "Clínicas completas", kant: "Basadas en datos" }
@@ -883,10 +899,10 @@
 
         const AboutSection = () => {
             const team = [
-                { name: "Francisco Martínez", role: "Coordinador del proyecto", desc: "Grado en Bioquímica", img: "miembro1.jpeg" },
-                { name: "Rebeca Reguero", role: "Diseño web", desc: "Grado en Bioquímica", img: "miembro3.jpeg" },
-                { name: "Víctor Reguero", role: "Testing", desc: "Grado en Bioquímica", img: "miembro4.jpeg" },
-                { name: "David Villén", role: "Editor", desc: "Grado en Bioquímica", img: "miembro2.jpeg" }
+                { name: "Francisco Martínez", role: "Coordinador del proyecto", desc: "Estudiante grado en Bioquímica", img: "miembro1.jpeg" },
+                { name: "Rebeca Reguero", role: "Diseño web", desc: "Estudiante grado en Bioquímica", img: "miembro3.jpeg" },
+                { name: "Víctor Reguero", role: "Testing", desc: "Estudiante grado en Bioquímica", img: "miembro4.jpeg" },
+                { name: "David Villén", role: "Editor", desc: "Estudiante grado en Bioquímica", img: "miembro2.jpeg" }
 
             ];
 
@@ -1090,7 +1106,7 @@
                 </div>
             );
         };
-
+        
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
