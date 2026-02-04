@@ -93,6 +93,21 @@
         .premium-shadow {
             box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.12);
         }
+
+        /* --- NUEVO: ANIMACIÓN CARRUSEL (AJUSTADO A 25s PARA MÁS VELOCIDAD) --- */
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+        
+        .animate-marquee {
+            animation: marquee 25s linear infinite;
+        }
+
+        /* Pausar animación al pasar el ratón para leer */
+        .marquee-container:hover .animate-marquee {
+            animation-play-state: paused;
+        }
     </style>
 </head>
 <body>
@@ -109,7 +124,7 @@
                 "section-solucion",         // 2 (La sección que quieres centrada)
                 "section-funcionamiento",   // 3
                 "section-ejemplo",          // 4
-                "section-nohace",           // 5
+                "section-mercado",          // 5 (ANTERIORMENTE NO HACE, AHORA MERCADO)
                 "section-monetizacion",     // 6
                 "section-privacidad",       // 7
                 "section-futuro",           // 8 (Perspectivas)
@@ -361,12 +376,22 @@
         );
 
         const Hero = () => {
+            const newsItems = [
+                { img: "titulo1.jpg", source: "- El País" },
+                { img: "titulo2.jpg", source: "- Infobae" },
+                { img: "titulo3.jpg", source: "- Infobae" },
+                { img: "titulo4.jpg", source: "- Telecinco" }
+            ];
+            
+            // Duplicamos los items varias veces para crear el efecto de loop infinito
+            const marqueeItems = [...newsItems, ...newsItems, ...newsItems];
+
             return (
-                <section id="section-portada" className="relative min-h-screen flex items-start pt-28 md:pt-40 overflow-hidden bg-white">
+                <section id="section-portada" className="relative min-h-screen flex items-start pt-28 md:pt-40 pb-40 overflow-hidden bg-white">
                     <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-blue-50 rounded-full blur-[120px] -z-10 opacity-60"></div>
                     <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-50 rounded-full blur-[100px] -z-10 opacity-60"></div>
 
-                    <div className="max-w-7xl mx-auto px-6 w-full">
+                    <div className="max-w-7xl mx-auto px-6 w-full relative z-10">
                         <div className="grid lg:grid-cols-2 gap-12 items-center">
                             
                             <Reveal delay={100}>
@@ -391,7 +416,7 @@
                                     <div className="absolute -inset-1 bg-gradient-to-r from-blue-200 to-purple-200 rounded-[2rem] blur opacity-40 group-hover:opacity-75 transition duration-1000"></div>
                                     <div className="relative rounded-[1.5rem] overflow-hidden premium-shadow bg-white aspect-video md:h-[400px] w-full">
                                         <img 
-                                            src="imagen1.jpg" 
+                                            src="web.mp4" 
                                             alt="Interfaz Hemotrace" 
                                             className="w-full h-full object-cover transform transition-transform duration-700 hover:scale-105"
                                         />
@@ -402,9 +427,31 @@
                         </div>
                     </div>
                     
-                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-gray-400">
+                    <div className="absolute bottom-40 left-1/2 -translate-x-1/2 animate-bounce text-gray-400 z-10">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
                     </div>
+
+                    {/* --- CARRUSEL DE TITULARES --- */}
+                    <div className="absolute bottom-0 left-0 w-full z-20 glass border-t border-gray-100 py-6 marquee-container">
+                        <div className="flex gap-8 animate-marquee whitespace-nowrap">
+                            {marqueeItems.map((item, index) => (
+                                <div key={index} className="inline-flex flex-col items-center flex-shrink-0">
+                                    {/* Contenedor de imagen fijo en altura */}
+                                    <div className="h-24 md:h-28 rounded-md overflow-hidden shadow-sm mb-2 hover:shadow-md transition-shadow">
+                                        <img 
+                                            src={item.img} 
+                                            alt="Titular" 
+                                            className="h-full w-auto object-contain bg-white"
+                                        />
+                                    </div>
+                                    <span className="text-xs text-gray-500 font-medium tracking-wide">
+                                        {item.source}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                 </section>
             );
         };
@@ -421,19 +468,19 @@
                     id: 2,
                     title: "Tiempo limitado",
                     subtitle: "Tiempo limitado por consulta",
-                    content: <>Dado el tiempo limitado por consulta, disponer de <u>herramientas de apoyo</u> que ayuden a identificar patrones y cambios progresivos en analíticas puede ser clave para una detección más temprana.</>
+                    content: <>Dado el tiempo limitado por consulta, disponer de <span className="text-black font-medium"><u>herramientas de apoyo</u></span> que ayuden a identificar patrones y cambios progresivos en analíticas puede ser clave para una detección más temprana.</>
                 },
                 {
                     id: 3,
                     title: "Patrones invisibles",
                     subtitle: "Conclusiones obtenidas de correlaciones de datos",
-                    content: <>Anemias específicas, procesos inflamatorios crónicos o alteraciones complejas. Es posible <u>detectar estas correlaciones</u> en multitud de casos simultáneamente.</>
+                    content: <>Anemias específicas, procesos inflamatorios crónicos o alteraciones complejas. Es posible <span className="text-black font-medium"><u>detectar estas correlaciones</u></span> en multitud de casos simultáneamente.</>
                 },
                 {
                     id: 4,
                     title: "Ansiedad del paciente",
                     subtitle: "Largos tiempos de espera",
-                    content: <>El informe de laboratorio es técnico e incomprensible. Genera ansiedad y búsquedas erróneas en internet. Hemotrace <u>traduce este lenguaje técnico</u> para el paciente, sin sustituir al médico.</>
+                    content: <>El informe de laboratorio es técnico e incomprensible. Genera ansiedad y búsquedas erróneas en internet. Hemotrace <span className="text-black font-medium"><u>traduce este lenguaje técnico</u></span> para el paciente, sin sustituir al médico.</>
                 }
             ];
 
@@ -512,17 +559,17 @@
                                 {
                                     icon: "📊", 
                                     title: "1. Datos estructurados", 
-                                    content: <>La inteligencia artificial está entrenada para analizar datos biosanitarios y <u>detectar patrones patológicos</u> que escapan a la vista.</>
+                                    content: <>Detección automática de <u>patrones patológicos</u> que escapan a la vista.</>
                                 },
                                 {
                                     icon: "🧠", 
                                     title: "2. Machine learning", 
-                                    content: <>Inteligencia artificial entrenada en multitud de patologías para aprender <u>patrones de variación y correlaciones</u> entre cientos de variables.</>
+                                    content: <>Aprende <u>patrones de variación y correlaciones</u> para multitud de patologías</>
                                 },
                                 {
                                     icon: "🎯", 
                                     title: "3. Predicción", 
-                                    content: <>Ayuda clave en el diagnóstico predictivo. El programa <u>sugiere posibles patologías siguiendo unos patrones</u> (anemia, infección, inflamación) y predice posibles tendencias futuras.</>
+                                    content: <><u>Sugiere posibles patologías siguiendo unos patrones</u> y predice posibles tendencias futuras.</>
                                 }
                             ].map((item, index) => (
                                 <Reveal key={index} delay={index * 200}>
@@ -656,30 +703,51 @@
             );
         };
 
-        const LimitationSection = () => (
-            <section id="section-nohace" className="bg-red-50 py-24 border-y border-red-100">
-                <div className="max-w-4xl mx-auto px-6 text-center">
-                    <Reveal delay={200}>
-                        <h2 className="text-3xl md:text-4xl font-normal text-slate-900 mb-8">Lo que NO hace Hemotrace</h2>
-                        
-                        <div className="grid md:grid-cols-2 gap-8 text-left">
-                            <div className="bg-white p-8 rounded-3xl shadow-sm border border-red-100">
-                                <h3 className="text-xl font-medium text-slate-900 mb-3">❌ No diagnostica</h3>
-                                <p className="text-slate-600 text-sm leading-relaxed font-normal">
-                                    Hemotrace no explora el historial personal del paciente. Solo analiza números y los relaciona con datos cedidos por el paciente. Puede sugerir patrones sirviendo como <u><span className="text-black font-medium">herramienta de apoyo para personal sanitario,</span> pero nunca sustituir diagnóstico médico</u>.
-                                </p>
+        const MarketAnalysisSection = () => {
+            const data = [
+                { feat: "Interpretación de hemogramas", chatgpt: "✅", hemo: "✅", med: "✅", kant: "✅" },
+                { feat: "Explicación narrativa detallada", chatgpt: "Baja", hemo: "Alta", med: "Alta", kant: "Media" },
+                { feat: "Generación de informes", chatgpt: "❌", hemo: "✅", med: "❌", kant: "❌" },
+                { feat: "Accesibilidad pública", chatgpt: "Alta", hemo: "Alta", med: "Baja", kant: "Media" },
+                { feat: "Razonamiento clínico", chatgpt: "Moderado", hemo: "Alto", med: "Alto", kant: "Medio" },
+                { feat: "Recomendaciones", chatgpt: "Genéricas", hemo: "Personalizadas", med: "Clínicas completas", kant: "Basadas en datos" }
+            ];
+
+            return (
+                <section id="section-mercado" className="bg-white py-24 px-6 border-y border-gray-100">
+                    <div className="max-w-7xl mx-auto">
+                        <Reveal delay={200}>
+                            <h2 className="text-3xl md:text-5xl font-light text-black mb-12 tracking-tight text-center">Análisis del mercado</h2>
+                            
+                            <div className="overflow-x-auto rounded-3xl border border-gray-200 shadow-sm">
+                                <table className="w-full text-left border-collapse bg-white">
+                                    <thead>
+                                        <tr className="bg-gray-50 text-sm uppercase tracking-wider text-gray-500 border-b border-gray-200">
+                                            <th className="p-6 font-medium">Característica / Uso</th>
+                                            <th className="p-6 font-medium">ChatGPT</th>
+                                            <th className="p-6 font-bold text-blue-600 bg-blue-50/50">Hemotrace</th>
+                                            <th className="p-6 font-medium">Med-PaLM</th>
+                                            <th className="p-6 font-medium">Kantesti</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-sm md:text-base text-gray-600 font-normal">
+                                        {data.map((row, i) => (
+                                            <tr key={i} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${i === data.length - 1 ? 'border-0' : ''}`}>
+                                                <td className="p-6 font-medium text-black">{row.feat}</td>
+                                                <td className="p-6">{row.chatgpt}</td>
+                                                <td className="p-6 font-medium text-black bg-blue-50/30">{row.hemo}</td>
+                                                <td className="p-6">{row.med}</td>
+                                                <td className="p-6">{row.kant}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
-                            <div className="bg-white p-8 rounded-3xl shadow-sm border border-red-100">
-                                <h3 className="text-xl font-medium text-slate-900 mb-3">🗑️ Calidad de los datos</h3>
-                                <p className="text-slate-600 text-sm leading-relaxed font-normal">
-                                    La precisión del análisis depende directamente de la calidad y consistencia de los datos introducidos
-                                </p>
-                            </div>
-                        </div>
-                    </Reveal>
-                </div>
-            </section>
-        );
+                        </Reveal>
+                    </div>
+                </section>
+            );
+        };
 
         // SECCIÓN DE MONETIZACIÓN (Con lógica de ocultamiento)
         const MonetizationSection = () => {
@@ -815,10 +883,11 @@
 
         const AboutSection = () => {
             const team = [
-                { name: "Francisco Martínez", role: "Coordinador del proyecto", desc: "Coordinación y desarrollo.", img: "miembro1.jpeg" },
-                { name: "David Villén", role: "Soporte Técnico", desc: "Estructura técnica y desarrollo.", img: "miembro2.jpeg" },
-                { name: "Rebeca Reguero", role: "Diseño & UX", desc: "Validación funcional y organización.", img: "miembro3.jpeg" },
-                { name: "Víctor Reguero", role: "QA & Testing", desc: "Mejora del sistema y pruebas.", img: "miembro4.jpeg" }
+                { name: "Francisco Martínez", role: "Coordinador del proyecto", desc: "Grado en Bioquímica", img: "miembro1.jpeg" },
+                { name: "Rebeca Reguero", role: "Diseño web", desc: "Grado en Bioquímica", img: "miembro3.jpeg" },
+                { name: "Víctor Reguero", role: "Testing", desc: "Grado en Bioquímica", img: "miembro4.jpeg" },
+                { name: "David Villén", role: "Editor", desc: "Grado en Bioquímica", img: "miembro2.jpeg" }
+
             ];
 
             const roadmapItems = [
@@ -1013,7 +1082,7 @@
                     <ProblemSection />
                     <TechSection />
                     <PracticalExample />
-                    <LimitationSection />
+                    <MarketAnalysisSection />
                     <MonetizationSection /> 
                     <PrivacySection />
                     <AboutSection />
