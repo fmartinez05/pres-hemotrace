@@ -93,21 +93,16 @@
         .premium-shadow {
             box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.12);
         }
-
-        /* --- NUEVO: ANIMACIÓN CARRUSEL (AJUSTADO A 25s PARA MÁS VELOCIDAD) --- */
-        @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-70%); }
-        }
         
-        .animate-marquee {
-            animation: marquee 25s linear infinite;
+        /* Animación de entrada para las fotos de portada */
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.9) translateY(20px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-pop-in {
+            animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        /* Pausar animación al pasar el ratón para leer */
-        .marquee-container:hover .animate-marquee {
-            animation-play-state: paused;
-        }
     </style>
 </head>
 <body>
@@ -117,22 +112,8 @@
         const { useState, useEffect, useRef } = React;
 
         // --- COMPONENTE DE NAVEGACIÓN Y "DIRECTOR DE ESCENA" ---
-        const PresentationControls = () => {
-            // ORDEN ACTUALIZADO: Privacidad -> Futuro -> Monetización -> Equipo
-            const sections = [
-                "section-portada",          // 0
-                "section-problema",         // 1
-                "section-solucion",         // 2
-                "section-funcionamiento",   // 3
-                "section-ejemplo",          // 4
-                "section-mercado",          // 5
-                "section-privacidad",       // 6 (MOVIDO)
-                "section-futuro",           // 7 (MOVIDO - Antes parte de About)
-                "section-monetizacion",     // 8 (MOVIDO)
-                "section-equipo"            // 9 (MOVIDO - Antes parte de About)
-            ];
-
-            const [currentIndex, setCurrentIndex] = useState(0);
+        const PresentationControls = ({ currentIndex, setCurrentIndex, sections, setHeroSequenceActive }) => {
+            
             const activeAnimationRef = useRef(null); 
 
             // Función de suavizado (Easing)
@@ -250,12 +231,11 @@
                     }
 
                     // --- SCENARIO: EQUIPO UNIVERSITARIO (ÚLTIMA SECCIÓN) ---
-                    // Como ahora es la última, hacemos scroll al final de la página
                     if (sections[currentIndex] === "section-equipo") {
                         setTimeout(() => {
                             const pageBottom = document.documentElement.scrollHeight;
                             animateScroll(pageBottom, 5000, linear); 
-                        }, 5000); // Ajustado para que de tiempo a ver las fotos
+                        }, 5000); 
                     }
                 });
 
@@ -265,8 +245,24 @@
             }, [currentIndex]);
 
             const handleNext = () => {
+                // LOGICA ESPECIAL HERO -> PROBLEMA
+                if (currentIndex === 0) {
+                    setHeroSequenceActive(true); 
+                    
+                    // Tiempo total: 
+                    // 0.0s (Foto 1) -> 0.5s (Foto 2) -> 1.0s (Foto 3) -> 1.5s (Foto 4) 
+                    // + 1.0s de espera en la 4ta 
+                    // = 2.5s total hasta el cambio
+                    setTimeout(() => {
+                        setHeroSequenceActive(false);
+                        setCurrentIndex(prev => prev + 1);
+                    }, 2500);
+                    return;
+                }
+
                 if (currentIndex < sections.length - 1) setCurrentIndex(prev => prev + 1);
             };
+            
             const handlePrev = () => {
                 if (currentIndex > 0) setCurrentIndex(prev => prev - 1);
             };
@@ -284,7 +280,7 @@
                 };
                 window.addEventListener('keydown', handleKeyDown);
                 return () => window.removeEventListener('keydown', handleKeyDown);
-            }, [currentIndex]);
+            }, [currentIndex]); 
 
             return (
                 <div className="fixed bottom-6 right-6 z-[9999] flex gap-2">
@@ -369,20 +365,71 @@
             </nav>
         );
 
-        const Hero = () => {
+        const Hero = ({ sequenceActive }) => {
+            // visibleCount indica cuántas fotos deben verse (0, 1, 2, 3 o 4)
+            const [visibleCount, setVisibleCount] = useState(0);
+            
             const newsItems = [
                 { img: "titulo4.jpg", source: "- Telecinco" },
                 { img: "titulo2.jpg", source: "- Infobae" },
                 { img: "titulo3.jpg", source: "- murciatoday.com" },
                 { img: "titulo1.jpg", source: "- El País" }
             ];
-            
-            const marqueeItems = [...newsItems, ...newsItems, ...newsItems];
+
+            useEffect(() => {
+                if (sequenceActive) {
+                    // Secuencia temporizada acumulativa
+                    // T=0s: Muestra 1
+                    setVisibleCount(1);
+                    
+                    const t1 = setTimeout(() => setVisibleCount(2), 500);  // 0.5s
+                    const t2 = setTimeout(() => setVisibleCount(3), 1000); // 1.0s
+                    const t3 = setTimeout(() => setVisibleCount(4), 1500); // 1.5s
+                    // 1.5s + 1s espera = 2.5s -> Controlado por PresentationControls
+                    
+                    return () => {
+                        clearTimeout(t1);
+                        clearTimeout(t2);
+                        clearTimeout(t3);
+                    };
+                } else {
+                    setVisibleCount(0);
+                }
+            }, [sequenceActive]);
 
             return (
                 <section id="section-portada" className="relative min-h-screen flex items-start pt-28 md:pt-40 pb-40 overflow-hidden bg-white">
                     <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-blue-50 rounded-full blur-[120px] -z-10 opacity-60"></div>
                     <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-50 rounded-full blur-[100px] -z-10 opacity-60"></div>
+
+                    {/* OVERLAY DE GRID DE IMAGENES - SIN SOLAPARSE */}
+                    {sequenceActive && (
+                        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-white/95 backdrop-blur-md p-4">
+                            <div className="grid grid-cols-2 gap-6 max-w-6xl w-full h-full max-h-[90vh] content-center">
+                                {newsItems.map((item, index) => (
+                                    <div 
+                                        key={index} 
+                                        className={`
+                                            relative flex flex-col items-center justify-center 
+                                            transition-all duration-700 ease-out
+                                            ${index < visibleCount ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-90'}
+                                        `}
+                                    >
+                                        <div className="w-full h-full max-h-[40vh] bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden flex items-center justify-center">
+                                            <img 
+                                                src={item.img} 
+                                                alt={item.source} 
+                                                className="w-full h-full object-contain p-2"
+                                            />
+                                        </div>
+                                        <p className="mt-2 text-sm md:text-base text-gray-500 font-medium">
+                                            {item.source}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="max-w-7xl mx-auto px-6 w-full relative z-10">
                         <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -424,25 +471,7 @@
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
                     </div>
 
-                    <div className="absolute bottom-0 left-0 w-full z-20 glass border-t border-gray-100 py-6 marquee-container">
-                        <div className="flex gap-8 animate-marquee whitespace-nowrap">
-                            {marqueeItems.map((item, index) => (
-                                <div key={index} className="inline-flex flex-col items-center flex-shrink-0">
-                                    <div className="h-24 md:h-28 rounded-md overflow-hidden shadow-sm mb-2 hover:shadow-md transition-shadow">
-                                        <img 
-                                            src={item.img} 
-                                            alt="Titular" 
-                                            className="h-full w-auto object-contain bg-white"
-                                        />
-                                    </div>
-                                    <span className="text-xs text-gray-500 font-medium tracking-wide">
-                                        {item.source}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
+                    {/* CARRUSEL ELIMINADO */}
                 </section>
             );
         };
@@ -1095,17 +1124,14 @@
                     {/* SECCIÓN OPINIONES USUARIOS */}
                     <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 mt-16 max-w-5xl px-8 transition-opacity duration-1000 delay-[2500ms] ${show ? 'opacity-100' : 'opacity-0'}`}>
                         {[
-                            { text: "Como experto en el sector, creo que es una herramienta con muchísimo potencial y que será imprescindible en el futuro", author: "Carlos Linares", role: "Visitador médico" },
+                            { text: "Me ha encantado esta herramienta que interpreta las analíticas de una forma clara y sencilla generando un informe excepcional. Va a ayudar a agilizar la consulta del profesional sanitario y dar un informe muy claro al paciente", author: "Carlos Linares", role: "Visitador médico" },
                             { text: "Me parece una herramienta fundamental y muy útil, que agiliza la consulta y discrimina entre diferentes diagnósticos diferenciales, pudiendo ser más certeros en llegar a un diagnóstico en concreto y asi tratar y seguir al paciente de forma más segura y acertada.", author: " Dra. García Basterra, Ángela", role: "Médica de familia" },
                             { text: "Explicaciones que realmente se entienden y sin fallos.", author: "TuBiciNoVuela", role: "Nutricionista" },
-                            { text: "La detección de patrones es sorprendente. Vio una tendencia en mi hierro que habíamos pasado por alto.", author: "Rafael Arroyo", role: "Deportista" }
+                            { text: "La detección de patrones es sorprendente. Vio una tendencia en mi hierro que habíamos pasado por alto.", author: "Rafael Arroyo", role: "Entrenador de triatlón" }
                         ].map((review, i) => (
                             <div key={i} className="p-6 rounded-2xl bg-gray-50 border border-gray-100 shadow-sm backdrop-blur-sm">
                                 <p className="text-gray-600 italic text-sm mb-3">"{review.text}"</p>
                                 <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600">
-                                        {review.author.charAt(0)}
-                                    </div>
                                     <div>
                                         <p className="text-xs font-bold text-black">{review.author}</p>
                                         <p className="text-[10px] uppercase tracking-wide text-gray-400">{review.role}</p>
@@ -1119,12 +1145,34 @@
         };
 
         const App = () => {
+            // ORDEN ACTUALIZADO: Privacidad -> Futuro -> Monetización -> Equipo
+            const sections = [
+                "section-portada",          // 0
+                "section-problema",         // 1
+                "section-solucion",         // 2
+                "section-funcionamiento",   // 3
+                "section-ejemplo",          // 4
+                "section-mercado",          // 5
+                "section-privacidad",       // 6 (MOVIDO)
+                "section-futuro",           // 7 (MOVIDO - Antes parte de About)
+                "section-monetizacion",     // 8 (MOVIDO)
+                "section-equipo"            // 9 (MOVIDO - Antes parte de About)
+            ];
+
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const [heroSequenceActive, setHeroSequenceActive] = useState(false);
+
             return (
                 <div className="antialiased selection:bg-blue-100 selection:text-blue-900">
                     <EndCurtain />
-                    <PresentationControls />
+                    <PresentationControls 
+                        currentIndex={currentIndex} 
+                        setCurrentIndex={setCurrentIndex} 
+                        sections={sections}
+                        setHeroSequenceActive={setHeroSequenceActive}
+                    />
                     <Navbar />
-                    <Hero />
+                    <Hero sequenceActive={heroSequenceActive} />
                     <ProblemSection />
                     <TechSection />
                     <PracticalExample />
