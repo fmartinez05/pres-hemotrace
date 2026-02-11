@@ -398,7 +398,8 @@
             }, [sequenceActive]);
 
             return (
-                <section id="section-portada" className="relative min-h-screen flex items-start pt-28 md:pt-40 pb-40 overflow-hidden bg-white">
+                // AJUSTE: h-screen y overflow-hidden para evitar scroll. Flex column para distribuir espacio.
+                <section id="section-portada" className="relative h-screen w-full flex flex-col items-center pt-16 pb-4 overflow-hidden bg-white">
                     <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-blue-50 rounded-full blur-[120px] -z-10 opacity-60"></div>
                     <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-50 rounded-full blur-[100px] -z-10 opacity-60"></div>
 
@@ -431,47 +432,44 @@
                         </div>
                     )}
 
-                    <div className="max-w-7xl mx-auto px-6 w-full relative z-10">
-                        <div className="grid lg:grid-cols-2 gap-12 items-center">
-                            
-                            <Reveal delay={100}>
-                                <div className="space-y-6">
-                                    <p className="text-blue-600 font-medium tracking-wide uppercase text-xs">Universidad de Granada | Concurso de ideas 2026</p>
-                                    
-                                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-tight leading-[1.1] text-[#1d1d1f]">
-                                        Análisis de hemogramas inteligente<br/> 
-                                    </h1>
-                                    
-                                    <p className="text-lg text-gray-500 max-w-lg leading-relaxed font-normal">
-                                        Transformando los datos complejos de un hemograma en <u>conclusiones claras</u>.
-                                    </p>
-                                    
-                                    <p> <span className="text-black font-medium">Apoyo, organización y eficiencia</span> para profesionales sanitarios
-                                    </p>
+                    <div className="flex-1 flex flex-col items-center justify-center w-full max-w-[1920px] px-4 md:px-6 relative z-10 gap-4 md:gap-6">
+                        
+                        <Reveal delay={100}>
+                            <div className="text-center w-full">
+                                {/* TÍTULO: whitespace-nowrap fuerza una línea. Tamaños ajustados para caber sin romperse */}
+                                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-light tracking-tighter leading-none text-[#1d1d1f] whitespace-nowrap">
+                                    Análisis de hemogramas inteligente
+                                </h1>
+                                
+                                <p className="text-blue-600 font-medium tracking-wide uppercase text-xs md:text-sm mt-2">
+                                    Universidad de Granada · Concurso de ideas UGR
+                                </p>
+                                
+                                {/* TEXTO "TRANSFORMANDO..." ELIMINADO */}
+                            </div>
+                        </Reveal>
+                        
+                        <Reveal delay={300}>
+                            <div className="relative group w-full mx-auto flex items-center justify-center">
+                                <div className="absolute -inset-1 bg-gradient-to-r from-blue-200 to-purple-200 rounded-[1.5rem] blur opacity-40 group-hover:opacity-75 transition duration-1000"></div>
+                                {/* CONTENEDOR VIDEO: max-h-[65vh] asegura que no se salga de la pantalla verticalmente */}
+                                <div className="relative rounded-[1.5rem] overflow-hidden premium-shadow bg-white shadow-2xl 
+                                                aspect-video w-auto h-auto max-w-full max-h-[60vh] md:max-h-[65vh]">
+                                    <img 
+                                        src="web.mp4" 
+                                        alt="Interfaz Hemotrace" 
+                                        className="w-full h-full object-cover"
+                                    />
                                 </div>
-                            </Reveal>
-                            
-                            <Reveal delay={300}>
-                                <div className="relative group mt-8 lg:mt-0">
-                                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-200 to-purple-200 rounded-[2rem] blur opacity-40 group-hover:opacity-75 transition duration-1000"></div>
-                                    <div className="relative rounded-[1.5rem] overflow-hidden premium-shadow bg-white aspect-video md:h-[400px] w-full">
-                                        <img 
-                                            src="web.mp4" 
-                                            alt="Interfaz Hemotrace" 
-                                            className="w-full h-full object-cover transform transition-transform duration-700 hover:scale-105"
-                                        />
-                                    </div>
-                                </div>
-                            </Reveal>
+                            </div>
+                        </Reveal>
 
-                        </div>
                     </div>
                     
-                    <div className="absolute bottom-40 left-1/2 -translate-x-1/2 animate-bounce text-gray-400 z-10">
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 animate-bounce text-gray-400 z-10">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
                     </div>
 
-                    {/* CARRUSEL ELIMINADO */}
                 </section>
             );
         };
