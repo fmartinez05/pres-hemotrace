@@ -267,13 +267,16 @@
                 if (currentIndex > 0) setCurrentIndex(prev => prev - 1);
             };
 
-            // Teclado
+            // Teclado y Pasadores de Diapositivas (Clickers)
             useEffect(() => {
                 const handleKeyDown = (e) => {
-                    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+                    // Teclas para AVANZAR: Flecha Derecha, Flecha Abajo, Espacio, PageDown (Clickers)
+                    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown') {
                         e.preventDefault();
                         handleNext();
-                    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    } 
+                    // Teclas para RETROCEDER: Flecha Izquierda, Flecha Arriba, PageUp (Clickers)
+                    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
                         e.preventDefault();
                         handlePrev();
                     }
